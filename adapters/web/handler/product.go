@@ -19,6 +19,14 @@ func NewProductHandler(r *mux.Router, n *negroni.Negroni, service application.Pr
 	r.Handle("/product/", n.With(
 		negroni.Wrap(createProduct(service)),
 	)).Methods("POST", "OPTIONS")
+
+	r.Handle("/product/enable/{id}", n.With(
+		negroni.Wrap(enableProduct(service)),
+	)).Methods("PUT", "OPTIONS")
+
+	r.Handle("/product/disable/{id}", n.With(
+		negroni.Wrap(disableProduct(service)),
+	)).Methods("PUT", "OPTIONS")
 }
 
 func getProduct(service application.ProductServiceInterface) http.Handler {
@@ -74,5 +82,70 @@ func createProduct(service application.ProductServiceInterface) http.Handler {
 			return
 		}
 
+	})
+}
+
+func enableProduct(service application.ProductServiceInterface) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		product, err := service.Get(id)
+
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write(jsonError(err.Error()))
+			return
+		}
+
+		result, err := service.Enable(product)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(jsonError(err.Error()))
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(result)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(jsonError(err.Error()))
+			return
+		}
+
+	})
+}
+
+func disableProduct(service application.ProductServiceInterface) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		product, err := service.Get(id)
+
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write(jsonError(err.Error()))
+			return
+		}
+
+		result, err := service.Disable(product)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(jsonError(err.Error()))
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(result)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(jsonError(err.Error()))
+			return
+		}
 	})
 }
