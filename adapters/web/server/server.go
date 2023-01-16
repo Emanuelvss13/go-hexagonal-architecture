@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/emanuelvss13/go-hexagonal/adapters/web/handler"
 	application "github.com/emanuelvss13/go-hexagonal/app"
 
 	"github.com/codegangsta/negroni"
@@ -13,7 +14,7 @@ import (
 )
 
 type WebServer struct {
-	Service application.ProductInterface
+	Service application.ProductServiceInterface
 }
 
 func NewWebServer() *WebServer {
@@ -26,6 +27,10 @@ func (w WebServer) Serve() {
 	n := negroni.New(
 		negroni.NewLogger(),
 	)
+
+	handler.NewProductHandler(r, n, w.Service)
+
+	http.Handle("/", r)
 
 	server := &http.Server{
 		ReadHeaderTimeout: 10 * time.Second,
